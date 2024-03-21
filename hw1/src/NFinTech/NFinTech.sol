@@ -76,22 +76,58 @@ contract NFinTech is IERC721 {
 
     function setApprovalForAll(address operator, bool approved) external {
         // TODO: please add your implementaiton here
+        address from = msg.sender;
+
+        if (operator != address(0)) {
+            _operatorApproval[from][operator] = approved;
+            emit ApprovalForAll(from, operator, approved);
+        } else {
+            revert();
+        }
     }
 
     function isApprovedForAll(address owner, address operator) public view returns (bool) {
         // TODO: please add your implementaiton here
+        return _operatorApproval[owner][operator];
     }
 
     function approve(address to, uint256 tokenId) external {
         // TODO: please add your implementaiton here
+        address from = msg.sender;
+        address owner = _owner[tokenId];
+        
+        if ((owner == from) || _operatorApproval[owner][from]) {
+            emit Approval(owner, to, tokenId);
+            _tokenApproval[tokenId] = to;
+        } else {
+            revert();
+        }
     }
 
     function getApproved(uint256 tokenId) public view returns (address operator) {
         // TODO: please add your implementaiton here
+        return _tokenApproval[tokenId];
     }
 
     function transferFrom(address from, address to, uint256 tokenId) public {
         // TODO: please add your implementaiton here
+        address owner = _owner[tokenId];
+        if (
+            (
+                (_tokenApproval[tokenId] == msg.sender && owner == from) ||
+                (_operatorApproval[from][msg.sender] && owner == from)
+            ) &&
+                to != address(0)
+        ) {
+            emit Transfer(owner, to, tokenId);
+            _owner[tokenId] = to;
+            _balances[owner] -= 1;
+            _balances[to] += 1;
+        } else {
+            revert();
+        }
+
+
     }
 
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes calldata data) public {
