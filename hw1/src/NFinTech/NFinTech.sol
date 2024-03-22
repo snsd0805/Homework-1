@@ -126,15 +126,31 @@ contract NFinTech is IERC721 {
         } else {
             revert();
         }
+    }
 
-
+    function _safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) internal {
+        if (to.code.length != 0 ) {
+            try IERC721TokenReceiver(to).onERC721Received(msg.sender, from, tokenId, data) returns (bytes4 retval) {
+                if (retval == IERC721TokenReceiver.onERC721Received.selector) {
+                    transferFrom(from, to, tokenId);
+                } else {
+                    revert();
+                }
+            } catch {
+                revert();
+            }
+        } else {
+            transferFrom(from, to, tokenId);   
+        }
     }
 
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes calldata data) public {
         // TODO: please add your implementaiton here
+        _safeTransferFrom(from, to, tokenId, data);
     }
 
     function safeTransferFrom(address from, address to, uint256 tokenId) public {
         // TODO: please add your implementaiton here
+        _safeTransferFrom(from, to, tokenId, "");
     }
 }
